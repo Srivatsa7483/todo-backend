@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import authRoutes from "./routes/auth.js";
+import User from './models/User.js'; // ✅ Importing User model
 
 const app = express();
 app.use(cors());
@@ -22,13 +23,6 @@ mongoose
     console.error("❌ MongoDB connection error:", err.message);
     process.exit(1);
   });
-
-// ✅ User Schema & Model
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-});
-const User = mongoose.model("User", userSchema);
 
 // ✅ Todo Schema & Model
 const todoSchema = new mongoose.Schema({
@@ -47,7 +41,7 @@ const authMiddleware = (req, res, next) => {
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // optionally use req.user.id later
+    req.user = decoded;
     next();
   } catch (err) {
     res.status(401).json({ error: "Unauthorized: Invalid token" });
@@ -82,7 +76,7 @@ app.post("/api/auth/login", async (req, res) => {
   res.json({ token });
 });
 
-// ✅ Protected Todo Routes (require token)
+// ✅ Protected Todo Routes
 app.get("/todos", authMiddleware, async (req, res) => {
   const todos = await Todo.find();
   res.json(todos);
@@ -113,6 +107,6 @@ app.get("/", (req, res) => {
   res.send("API Running");
 });
 
-// ✅ Server start
+// ✅ Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
